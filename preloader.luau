@@ -10,6 +10,9 @@ local priorities = {}
 
 local DEBUG_FAILED = false
 
+local MAX_RETRY = 5
+local RETRY_CHECK = 1
+
 function core.new()
 	local self = setmetatable(core,{}) 
 	self.prioritiesStatus = {
@@ -96,12 +99,12 @@ function core:Load()
 			elseif fetchStatus == Enum.AssetFetchStatus.TimedOut then
 				if priority == self.PriorityType.HIGH then
 					local retries = 0
-					while retries < 5 or ContentProvider:GetAssetFetchStatus(contentId) == Enum.AssetFetchStatus.TimedOut do
+					while retries < MAX_RETRY or ContentProvider:GetAssetFetchStatus(contentId) == Enum.AssetFetchStatus.TimedOut do
 						retries += 1
 						ContentProvider:PreloadAsync({contentId})
-						task.wait(1)
+						task.wait(RETRY_CHECK)
 					end
-					if retries >= 5 and ContentProvider:GetAssetFetchStatus(contentId) ~= Enum.AssetFetchStatus.Success then
+					if retries >= MAX_RETRY and ContentProvider:GetAssetFetchStatus(contentId) ~= Enum.AssetFetchStatus.Success then
 						table.insert(self.prioritiesStatus.High.Failed, contentId)
 					else
 						table.insert(self.prioritiesStatus.High.Loaded, contentId)
